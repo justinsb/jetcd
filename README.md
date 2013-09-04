@@ -1,11 +1,11 @@
 jetcd: Java binding for etcd
 ============================
 
-A Java binding for the awesome etcd
+A Java binding for the awesome [etcd]
 
-Use the Apache HttpAsyncClient to implement watches without blocking a thread.
+Uses the Apache [HttpAsyncClient] to implement watches without blocking a thread, and Google's [Guava] to give us the nice [ListenableFuture] interface. 
 
-Check out SmokeTest.java to see how this is used (and tested), but here's a quick code example:
+Check out [SmokeTest.java] to see how this is used (and tested), but here's a quick code example:
 
 ```Java
 EtcdClient client = new EtcdClient(URI.create("http://127.0.0.1:4001/"));
@@ -27,13 +27,15 @@ Assert.assertEquals("world", result.value);
 EtcdResult watchResult = watchFuture.get(100, TimeUnit.MILLISECONDS);
 Assert.assertNotNull(result);
 Assert.assertEquals("world", result.value);
-
 ```
  
 For a bit of background, check out the [blog post]
 
 
 [blog post]: http://blog.justinsb.com
-
-
+[etcd]: http://coreos.com/blog/distributed-configuration-with-etcd/
+[SmokeTest.java]: https://github.com/justinsb/jetcd/blob/master/src/test/java/com/justinsb/etcd/SmokeTest.java
+[ListenableFuture]: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
+[Guava]: https://plus.google.com/118010414872916542489
+[HttpAsyncClient]:http://hc.apache.org/httpcomponents-asyncclient-dev/
 
