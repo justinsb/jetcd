@@ -1,0 +1,4 @@
+language: java
+script:
+  - scripts/run_etcd.sh
+  - mvn clean package
