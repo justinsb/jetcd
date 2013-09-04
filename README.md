@@ -1,7 +1,7 @@
 jetcd: Java binding for etcd
 ============================
 
-A Java binding for the awesome [etcd]
+A simple Java client library for the awesome [etcd]
 
 Uses the Apache [HttpAsyncClient] to implement watches without blocking a thread, and Google's [Guava] to give us the nice [ListenableFuture] interface. 
 
