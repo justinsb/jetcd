@@ -1,7 +1,10 @@
 jetcd: Java binding for etcd
 ============================
 
-[![Build Status](https://travis-ci.org/justinsb/jetcd.png?branch=master)](https://travis-ci.org/justinsb/jetcd)
+TravisCI Build Status: [![Build Status](https://travis-ci.org/justinsb/jetcd.png?branch=master)](https://travis-ci.org/justinsb/jetcd)
+
+CircleCI Build Status: ![CircleCI Status](https://circleci.com/gh/justinsb/jetcd.png?circle-token=ebf4870e1fc43b6d6139a0514312441b7dc11457)
+
 
 A simple Java client library for the awesome [etcd]
 
