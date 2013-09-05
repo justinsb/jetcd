@@ -9,5 +9,4 @@ echo "Building etcd"
 ./build
 echo "Done!"
 
-./etcd &
-
+nohup bash -c './etcd &'
