@@ -257,7 +257,11 @@ public class EtcdClient {
 
         if (response.httpStatusCode != 200) {
             EtcdResult etcdResult = parseEtcdResult(response.json);
-            throw new EtcdClientException("Error listing keys", etcdResult);
+            if (etcdResult.errorCode == 100) {
+                return null;
+            } else {
+                throw new EtcdClientException("Error listing keys", etcdResult);
+            }
         }
 
         try {

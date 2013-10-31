@@ -219,7 +219,15 @@ public class SmokeTest {
             Assert.assertEquals(true, result.dir);
         }
     }
+    
+    @Test
+    public void testListWithNonexistentKey() throws Exception {
+        String key = prefix + "/nonexistent";
 
+        List<EtcdResult> listing = this.client.listChildren(key);
+        Assert.assertNull(listing);
+    }
+    
     @Test
     public void testGetVersion() throws Exception {
         String version = this.client.getVersion();
