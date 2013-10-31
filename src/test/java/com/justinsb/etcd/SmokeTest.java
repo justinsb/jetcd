@@ -92,7 +92,7 @@ public class SmokeTest {
         String key = prefix + "/doesnotexist";
 
         try {
-            EtcdResult result = this.client.delete(key);
+            this.client.delete(key);
             Assert.fail();
         } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError(100));
