@@ -9,7 +9,7 @@
 
   <groupId>com.github.mlaccetti</groupId>
   <artifactId>etcd-client</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.1</version>
   <packaging>jar</packaging>
 
   <name>etcd Java client</name>
