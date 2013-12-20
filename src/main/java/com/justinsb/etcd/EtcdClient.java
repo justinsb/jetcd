@@ -23,12 +23,9 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -41,8 +38,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 public class EtcdClient {
-    //private static final Logger log = LoggerFactory.getLogger(EtcdClient.class);
-
     static final CloseableHttpAsyncClient httpClient = buildDefaultHttpClient();
     static final Gson gson = new GsonBuilder().create();
 
