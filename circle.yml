@@ -1,3 +1,5 @@
 dependencies:
   pre:
     - ./scripts/run_etcd.sh
+  post:
+    - mvn dependency:resolve-plugins
