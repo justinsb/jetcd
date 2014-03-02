@@ -2,7 +2,7 @@ dependencies:
   pre:
     - ./scripts/run_etcd.sh
   post:
-    - mvn -X dependency:resolve-plugins
+    - mvn -X dependency:resolve-plugins -DincludeArtifactIds=org.apache.maven.plugins:maven-failsafe-plugin
 
 test:
   override:
