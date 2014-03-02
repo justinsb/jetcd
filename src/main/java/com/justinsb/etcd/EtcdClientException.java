@@ -16,7 +16,7 @@ public class EtcdClientException extends IOException {
     }
 
     public EtcdClientException(String message, int httpStatusCode) {
-        super(message);
+        super(message + "(" + httpStatusCode + ")");
         this.httpStatusCode = httpStatusCode;
         this.result = null;
     }
@@ -25,6 +25,10 @@ public class EtcdClientException extends IOException {
         super(message);
         this.httpStatusCode = null;
         this.result = result;
+    }
+    
+    public int getHttpStatusCode() {
+      return httpStatusCode;
     }
 
     public boolean isHttpError(int httpStatusCode) {

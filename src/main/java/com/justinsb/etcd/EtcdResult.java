@@ -1,11 +1,14 @@
 package com.justinsb.etcd;
 
+import java.util.List;
+
 public class EtcdResult {
     // General values
     public String action;
     public String key;
     public String value;
     public long index;
+    public EtcdResult node;
 
     // For set operations
     public String prevValue;
@@ -17,6 +20,7 @@ public class EtcdResult {
 
     // For listings
     public boolean dir;
+    public List<EtcdResult> nodes;
 
     // For errors
     public Integer errorCode;

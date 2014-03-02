@@ -16,14 +16,13 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -39,8 +38,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 public class EtcdClient {
-    private static final Logger log = LoggerFactory.getLogger(EtcdClient.class);
-
     static final CloseableHttpAsyncClient httpClient = buildDefaultHttpClient();
     static final Gson gson = new GsonBuilder().create();
 
@@ -67,7 +64,7 @@ public class EtcdClient {
      * Retrieves a key. Returns null if not found.
      */
     public EtcdResult get(String key) throws EtcdClientException {
-        URI uri = buildKeyUri("v1/keys", key, "");
+        URI uri = buildKeyUri("v2/keys", key, "");
         HttpGet request = new HttpGet(uri);
 
         EtcdResult result = syncExecute(request, 100);
@@ -83,7 +80,7 @@ public class EtcdClient {
      * Deletes the given key
      */
     public EtcdResult delete(String key) throws EtcdClientException {
-        URI uri = buildKeyUri("v1/keys", key, "");
+        URI uri = buildKeyUri("v2/keys", key, "");
         HttpDelete request = new HttpDelete(uri);
 
         return syncExecute(request);
@@ -111,6 +108,34 @@ public class EtcdClient {
     }
 
     /**
+     * Creates a directory
+     */
+    public EtcdResult createDirectory(String key) throws EtcdClientException {
+        List<BasicNameValuePair> data = Lists.newArrayList();
+        data.add(new BasicNameValuePair("dir", "true"));
+        return set0(key, data);
+    }
+    
+    /**
+     * Lists a directory
+     */
+    public List<EtcdResult> listDirectory(String key) throws EtcdClientException {
+      EtcdResult result = get(key + "/");
+      if (result == null || result.node == null) {
+        return null;
+      }
+      return result.node.nodes;
+    }
+    /**
+     * Delete a directory
+     */
+    public EtcdResult deleteDirectory(String key) throws EtcdClientException {
+        URI uri = buildKeyUri("v2/keys", key, "?dir=true");
+        HttpDelete request = new HttpDelete(uri);
+        return syncExecute(request);
+    }
+
+    /**
      * Sets a key to a new value, if the value is a specified value
      */
     public EtcdResult cas(String key, String prevValue, String value) throws EtcdClientException {
@@ -132,7 +157,7 @@ public class EtcdClient {
      * Watches the given subtree
      */
     public ListenableFuture<EtcdResult> watch(String key, Long index) throws EtcdClientException {
-        URI uri = buildKeyUri("v1/watch", key, "");
+        URI uri = buildKeyUri("v2/watch", key, "");
 
         HttpPost request = new HttpPost(uri);
 
@@ -166,9 +191,9 @@ public class EtcdClient {
 
     private EtcdResult set0(String key, List<BasicNameValuePair> data, int... expectedErrorCodes)
             throws EtcdClientException {
-        URI uri = buildKeyUri("v1/keys", key, "");
+        URI uri = buildKeyUri("v2/keys", key, "");
 
-        HttpPost request = new HttpPost(uri);
+        HttpPut request = new HttpPut(uri);
 
         UrlEncodedFormEntity entity = new UrlEncodedFormEntity(data, Charsets.UTF_8);
         request.setEntity(entity);
@@ -177,7 +202,7 @@ public class EtcdClient {
     }
 
     public List<EtcdResult> listChildren(String key) throws EtcdClientException {
-        URI uri = buildKeyUri("v1/keys", key, "/");
+        URI uri = buildKeyUri("v2/keys", key, "/");
         HttpGet request = new HttpGet(uri);
 
         return syncExecuteList(request);
@@ -342,7 +367,7 @@ public class EtcdClient {
                 }
             }
 
-            if (statusCode != 200) {
+            if (statusCode > 205) {
                 if (statusCode == 400 && json != null) {
                     // More information in JSON
                 } else {
