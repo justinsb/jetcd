@@ -3,6 +3,7 @@ dependencies:
     - ./scripts/run_etcd.sh
   post:
     - mvn -X dependency:resolve-plugins -DincludeArtifactIds=org.apache.maven.plugins:maven-failsafe-plugin
+    - mvn -X integration-test -Dmaven.test.skip=true
 
 test:
   override:
