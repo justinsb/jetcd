@@ -3,3 +3,7 @@ dependencies:
     - ./scripts/run_etcd.sh
   post:
     - mvn dependency:resolve-plugins
+
+test:
+  override:
+    - mvn -X integration-test
