@@ -4,6 +4,11 @@
 	<groupId>com.justinsb</groupId>
 	<artifactId>etcd-client</artifactId>
 	<version>0.1-SNAPSHOT</version>
+
+	<properties>
+		<artifactTargetPath>${project.build.directory}</artifactTargetPath>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -41,25 +46,25 @@
 
 	<build>
 		<plugins>
-                        <plugin>
-                                <artifactId>maven-assembly-plugin</artifactId>
-                                <version>2.4</version>
-                                <configuration>
-                                        <target>1.5</target>
-                                        <descriptorRefs>
-                                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                                        </descriptorRefs>
-                                </configuration>
-                                <executions>
-                                        <execution>
-                                                <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                                                <phase>package</phase> <!-- bind to the packaging phase -->
-                                                <goals>
-                                                        <goal>single</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<target>1.5</target>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -73,4 +78,17 @@
 		</plugins>
 	</build>
 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>findbugs-maven-plugin</artifactId>
+				<version>2.5.2</version>
+				<configuration>
+					<xmlOutput>true</xmlOutput>
+					<xmlOutputDirectory>${artifactTargetPath}</xmlOutputDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 </project>
