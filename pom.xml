@@ -87,6 +87,7 @@
 				<configuration>
 					<xmlOutput>true</xmlOutput>
 					<xmlOutputDirectory>${artifactTargetPath}</xmlOutputDirectory>
+					<findbugsXmlOutputDirectory>${artifactTargetPath}</findbugsXmlOutputDirectory>
 				</configuration>
 			</plugin>
 		</plugins>
