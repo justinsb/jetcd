@@ -227,7 +227,7 @@ public class SmokeTest {
 	@Test
 	public void testGetVersion() throws Exception {
 		String version = this.client.getVersion();
-		Assert.assertTrue(version.startsWith("etcd 0."));
+		Assert.assertTrue(version.startsWith("etcd"));
 	}
 
 }
