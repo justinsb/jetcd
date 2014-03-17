@@ -10,9 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.justinsb.etcd.EtcdClient;
-import com.justinsb.etcd.EtcdClientException;
-import com.justinsb.etcd.EtcdResult;
 
 public class SmokeTest {
 	String prefix;
