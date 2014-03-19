@@ -37,20 +37,29 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 public class EtcdClient {
-    static final CloseableHttpAsyncClient httpClient = buildDefaultHttpClient();
+    static CloseableHttpAsyncClient defaultHttpClient;
     static final Gson gson = new GsonBuilder().create();
-
-    static CloseableHttpAsyncClient buildDefaultHttpClient() {
-        // TODO: Increase timeout??
-        RequestConfig requestConfig = RequestConfig.custom().build();
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(requestConfig).build();
-        httpClient.start();
-        return httpClient;
+    
+    static synchronized CloseableHttpAsyncClient buildDefaultHttpClient() {
+        if (defaultHttpClient == null) {
+            // TODO: Increase timeout??
+            RequestConfig requestConfig = RequestConfig.custom().build();
+            CloseableHttpAsyncClient httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(requestConfig).build();
+            httpClient.start();
+            EtcdClient.defaultHttpClient = httpClient;
+        }
+        return defaultHttpClient;
     }
 
     final URI baseUri;
+    private final CloseableHttpAsyncClient httpClient;
 
     public EtcdClient(URI baseUri) {
+        this(baseUri, buildDefaultHttpClient());
+    }
+
+    public EtcdClient(URI baseUri, CloseableHttpAsyncClient client) {
+        this.httpClient = client;
         String uri = baseUri.toString();
         if (!uri.endsWith("/")) {
             uri += "/";
