@@ -17,15 +17,10 @@ import com.mastfrog.netty.http.client.HttpClient;
 import com.mastfrog.netty.http.client.HttpRequestBuilder;
 import com.mastfrog.netty.http.client.ResponseFuture;
 import com.mastfrog.netty.http.client.ResponseHandler;
-import com.mastfrog.netty.http.client.State;
 import com.mastfrog.url.Parameters;
 import com.mastfrog.url.ParametersElement;
 import com.mastfrog.util.AbstractBuilder;
 import com.mastfrog.util.Exceptions;
-import com.mastfrog.util.Streams;
-import com.mastfrog.util.thread.Receiver;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
@@ -33,9 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class EtcdClient {
