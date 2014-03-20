@@ -1,31 +1,8 @@
 package com.justinsb.etcd;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.net.MediaType;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,30 +12,51 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.mastfrog.acteur.headers.Method;
+import com.mastfrog.netty.http.client.HttpClient;
+import com.mastfrog.netty.http.client.HttpRequestBuilder;
+import com.mastfrog.netty.http.client.ResponseFuture;
+import com.mastfrog.netty.http.client.ResponseHandler;
+import com.mastfrog.netty.http.client.State;
+import com.mastfrog.url.Parameters;
+import com.mastfrog.url.ParametersElement;
+import com.mastfrog.util.AbstractBuilder;
+import com.mastfrog.util.Exceptions;
+import com.mastfrog.util.Streams;
+import com.mastfrog.util.thread.Receiver;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class EtcdClient {
-    static CloseableHttpAsyncClient defaultHttpClient;
+
     static final Gson gson = new GsonBuilder().create();
-    
-    static synchronized CloseableHttpAsyncClient buildDefaultHttpClient() {
-        if (defaultHttpClient == null) {
-            // TODO: Increase timeout??
-            RequestConfig requestConfig = RequestConfig.custom().build();
-            CloseableHttpAsyncClient httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(requestConfig).build();
-            httpClient.start();
-            EtcdClient.defaultHttpClient = httpClient;
-        }
-        return defaultHttpClient;
-    }
 
     final URI baseUri;
-    private final CloseableHttpAsyncClient httpClient;
+    private final HttpClient httpClient;
 
     public EtcdClient(URI baseUri) {
-        this(baseUri, buildDefaultHttpClient());
+        this(baseUri, HttpClient.builder()
+                .maxChunkSize(512)
+                .noCompression()
+                .maxInitialLineLength(255)
+                .followRedirects()
+                .threadCount(1)
+                .dontSend100Continue()
+                .build());
     }
 
-    public EtcdClient(URI baseUri, CloseableHttpAsyncClient client) {
+    public EtcdClient(URI baseUri, HttpClient client) {
         this.httpClient = client;
         String uri = baseUri.toString();
         if (!uri.endsWith("/")) {
@@ -73,9 +71,9 @@ public class EtcdClient {
      */
     public EtcdResult get(String key) throws EtcdClientException {
         URI uri = buildKeyUri("v2/keys", key, "");
-        HttpGet request = new HttpGet(uri);
+        UriRequest request = new UriRequest(Method.GET, uri);
 
-        EtcdResult result = syncExecute(request, new int[] { 200, 404 }, 100);
+        EtcdResult result = syncExecute(request, new int[]{200, 404}, 100);
         if (result.isError()) {
             if (result.errorCode == 100) {
                 return null;
@@ -89,9 +87,9 @@ public class EtcdClient {
      */
     public EtcdResult delete(String key) throws EtcdClientException {
         URI uri = buildKeyUri("v2/keys", key, "");
-        HttpDelete request = new HttpDelete(uri);
+        UriRequest request = new UriRequest(Method.DELETE, uri);
 
-        return syncExecute(request, new int[] { 200, 404 });
+        return syncExecute(request, new int[]{200, 404});
     }
 
     /**
@@ -104,7 +102,6 @@ public class EtcdClient {
     /**
      * Sets a key to a new value with an (optional) ttl
      */
-
     public EtcdResult set(String key, String value, Integer ttl) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("value", value));
@@ -112,7 +109,7 @@ public class EtcdClient {
             data.add(new BasicNameValuePair("ttl", Integer.toString(ttl)));
         }
 
-        return set0(key, data, new int[] { 200, 201 });
+        return set0(key, data, new int[]{200, 201});
     }
 
     /**
@@ -121,26 +118,27 @@ public class EtcdClient {
     public EtcdResult createDirectory(String key) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("dir", "true"));
-        return set0(key, data, new int[] { 200, 201 });
+        return set0(key, data, new int[]{200, 201});
     }
-    
+
     /**
      * Lists a directory
      */
     public List<EtcdNode> listDirectory(String key) throws EtcdClientException {
-      EtcdResult result = get(key + "/");
-      if (result == null || result.node == null) {
-        return null;
-      }
-      return result.node.nodes;
+        EtcdResult result = get(key + "/");
+        if (result == null || result.node == null) {
+            return null;
+        }
+        return result.node.nodes;
     }
+
     /**
      * Delete a directory
      */
     public EtcdResult deleteDirectory(String key) throws EtcdClientException {
         URI uri = buildKeyUri("v2/keys", key, "?dir=true");
-        HttpDelete request = new HttpDelete(uri);
-        return syncExecute(request, new int[] { 202 });
+        UriRequest request = new UriRequest(Method.DELETE, uri);
+        return syncExecute(request, new int[]{202});
     }
 
     /**
@@ -151,7 +149,7 @@ public class EtcdClient {
         data.add(new BasicNameValuePair("value", value));
         data.add(new BasicNameValuePair("prevValue", prevValue));
 
-        return set0(key, data, new int[] { 200, 412 }, 101);
+        return set0(key, data, new int[]{200, 412}, 101);
     }
 
     /**
@@ -165,18 +163,18 @@ public class EtcdClient {
      * Watches the given subtree
      */
     public ListenableFuture<EtcdResult> watch(String key, Long index, boolean recursive) throws EtcdClientException {
-    	String suffix = "?wait=true";
-    	if (index != null) {
-    		suffix += "&waitIndex=" + index;
-    	}
-    	if (recursive) {
-    		suffix += "&recursive=true";
-    	}
+        String suffix = "?wait=true";
+        if (index != null) {
+            suffix += "&waitIndex=" + index;
+        }
+        if (recursive) {
+            suffix += "&recursive=true";
+        }
         URI uri = buildKeyUri("v2/keys", key, suffix);
 
-        HttpGet request = new HttpGet(uri);
+        UriRequest request = new UriRequest(Method.GET, uri);
 
-        return asyncExecute(request, new int[] { 200 });
+        return asyncExecute(request, new int[]{200});
     }
 
     /**
@@ -185,7 +183,7 @@ public class EtcdClient {
     public String getVersion() throws EtcdClientException {
         URI uri = baseUri.resolve("version");
 
-        HttpGet request = new HttpGet(uri);
+        UriRequest request = new UriRequest(Method.GET, uri);
 
         // Technically not JSON, but it'll work
         // This call is the odd one out
@@ -196,27 +194,73 @@ public class EtcdClient {
         return s.json;
     }
 
+    static class BasicNameValuePair {
+
+        private final String key;
+        private final String value;
+
+        public BasicNameValuePair(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+    }
+
+    private String encodePairs(List<BasicNameValuePair> pairs) {
+        AbstractBuilder<ParametersElement, Parameters> b = com.mastfrog.url.Parameters.builder();
+        StringBuilder sb = new StringBuilder();
+        for (BasicNameValuePair p : pairs) {
+            try {
+                if (sb.length() > 0) {
+                    sb.append('&');
+                }
+                sb.append(URLEncoder.encode(p.key, "UTF-8")).append('=').append(URLEncoder.encode(p.value, "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+                Exceptions.chuck(ex);
+            }
+        }
+        return sb.toString();
+    }
+
     private EtcdResult set0(String key, List<BasicNameValuePair> data, int[] httpErrorCodes, int... expectedErrorCodes)
             throws EtcdClientException {
         URI uri = buildKeyUri("v2/keys", key, "");
-
-        HttpPut request = new HttpPut(uri);
-
-        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(data, Charsets.UTF_8);
-        request.setEntity(entity);
+        String body = encodePairs(data);
+        UriRequest request = new UriRequest(Method.PUT, uri, body);
 
         return syncExecute(request, httpErrorCodes, expectedErrorCodes);
     }
 
     public EtcdResult listChildren(String key) throws EtcdClientException {
         URI uri = buildKeyUri("v2/keys", key, "/");
-        HttpGet request = new HttpGet(uri);
+        UriRequest request = new UriRequest(Method.GET, uri);
 
-        EtcdResult result = syncExecute(request, new int[] { 200 });
+        EtcdResult result = syncExecute(request, new int[]{200});
         return result;
     }
 
-    protected ListenableFuture<EtcdResult> asyncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, final int... expectedErrorCodes)
+    static class UriRequest {
+
+        public final Method method;
+        public final URI uri;
+        public final String body;
+
+        public UriRequest(Method method, URI uri) {
+            this(method, uri, null);
+        }
+
+        public UriRequest(Method method, URI uri, String body) {
+            this.method = method;
+            this.uri = uri;
+            this.body = body;
+        }
+
+        public String toString() {
+            return method.name() + ' ' + uri + (body == null ? "" : " --> " + body);
+        }
+    }
+
+    protected ListenableFuture<EtcdResult> asyncExecute(UriRequest request, int[] expectedHttpStatusCodes, final int... expectedErrorCodes)
             throws EtcdClientException {
         ListenableFuture<JsonResponse> json = asyncExecuteJson(request, expectedHttpStatusCodes);
         return Futures.transform(json, new AsyncFunction<JsonResponse, EtcdResult>() {
@@ -227,7 +271,7 @@ public class EtcdClient {
         });
     }
 
-    protected EtcdResult syncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, int... expectedErrorCodes) throws EtcdClientException {
+    protected EtcdResult syncExecute(UriRequest request, int[] expectedHttpStatusCodes, int... expectedErrorCodes) throws EtcdClientException {
         try {
             return asyncExecute(request, expectedHttpStatusCodes, expectedErrorCodes).get();
         } catch (InterruptedException e) {
@@ -282,7 +326,7 @@ public class EtcdClient {
         return false;
     }
 
-    protected List<EtcdResult> syncExecuteList(HttpUriRequest request) throws EtcdClientException {
+    protected List<EtcdResult> syncExecuteList(UriRequest request) throws EtcdClientException {
         JsonResponse response = syncExecuteJson(request, 200);
         if (response.json == null) {
             return null;
@@ -307,7 +351,7 @@ public class EtcdClient {
         }
     }
 
-    protected JsonResponse syncExecuteJson(HttpUriRequest request, int... expectedHttpStatusCodes) throws EtcdClientException {
+    protected JsonResponse syncExecuteJson(UriRequest request, int... expectedHttpStatusCodes) throws EtcdClientException {
         try {
             return asyncExecuteJson(request, expectedHttpStatusCodes).get();
         } catch (InterruptedException e) {
@@ -316,30 +360,13 @@ public class EtcdClient {
         } catch (ExecutionException e) {
             throw unwrap(e);
         }
-
-        // ListenableFuture<HttpResponse> response = asyncExecuteHttp(request);
-        //
-        // HttpResponse httpResponse;
-        // try {
-        // httpResponse = response.get();
-        // } catch (InterruptedException e) {
-        // Thread.currentThread().interrupt();
-        // throw new
-        // EtcdClientException("Interrupted during request processing", e);
-        // } catch (ExecutionException e) {
-        // // TODO: Unwrap?
-        // throw new EtcdClientException("Error executing request", e);
-        // }
-        //
-        // String json = parseJsonResponse(httpResponse);
-        // return json;
     }
 
-    protected ListenableFuture<JsonResponse> asyncExecuteJson(HttpUriRequest request, final int[] expectedHttpStatusCodes) throws EtcdClientException {
-        ListenableFuture<HttpResponse> response = asyncExecuteHttp(request);
+    protected ListenableFuture<JsonResponse> asyncExecuteJson(UriRequest request, final int[] expectedHttpStatusCodes) throws EtcdClientException {
+        ListenableFuture<Response> response = asyncExecuteHttp(request);
 
-        return Futures.transform(response, new AsyncFunction<HttpResponse, JsonResponse>() {
-            public ListenableFuture<JsonResponse> apply(HttpResponse httpResponse) throws Exception {
+        return Futures.transform(response, new AsyncFunction<Response, JsonResponse>() {
+            public ListenableFuture<JsonResponse> apply(Response httpResponse) throws Exception {
                 JsonResponse json = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(json);
             }
@@ -350,6 +377,7 @@ public class EtcdClient {
      * We need the status code & the response to parse an error response.
      */
     static class JsonResponse {
+
         final String json;
         final int httpStatusCode;
 
@@ -360,34 +388,22 @@ public class EtcdClient {
 
     }
 
-    protected JsonResponse extractJsonResponse(HttpResponse httpResponse, int[] expectedHttpStatusCodes) throws EtcdClientException {
-        try {
-            StatusLine statusLine = httpResponse.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
+    protected JsonResponse extractJsonResponse(Response httpResponse, int[] expectedHttpStatusCodes) throws EtcdClientException {
+        HttpResponseStatus statusLine = httpResponse.status;
+        int statusCode = statusLine.code();
 
-            String json = null;
+        String json = httpResponse.entity;
 
-            if (httpResponse.getEntity() != null) {
-                try {
-                    json = EntityUtils.toString(httpResponse.getEntity());
-                } catch (IOException e) {
-                    throw new EtcdClientException("Error reading response", e);
-                }
+        if (!contains(expectedHttpStatusCodes, statusCode)) {
+            if (statusCode == 400 && json != null) {
+                // More information in JSON
+            } else {
+                throw new EtcdClientException("Error response from etcd: " + statusLine.toString(),
+                        statusCode);
             }
-
-            if (!contains(expectedHttpStatusCodes, statusCode)) {
-                if (statusCode == 400 && json != null) {
-                    // More information in JSON
-                } else {
-                    throw new EtcdClientException("Error response from etcd: " + statusLine.getReasonPhrase(),
-                            statusCode);
-                }
-            }
-
-            return new JsonResponse(json, statusCode);
-        } finally {
-            close(httpResponse);
         }
+
+        return new JsonResponse(json, statusCode);
     }
 
     private URI buildKeyUri(String prefix, String key, String suffix) {
@@ -406,34 +422,59 @@ public class EtcdClient {
         return uri;
     }
 
-    protected ListenableFuture<HttpResponse> asyncExecuteHttp(HttpUriRequest request) {
-        final SettableFuture<HttpResponse> future = SettableFuture.create();
+    protected ListenableFuture<Response> asyncExecuteHttp(UriRequest request) {
+        final SettableFuture<Response> future = SettableFuture.create();
 
-        httpClient.execute(request, new FutureCallback<HttpResponse>() {
-            public void completed(HttpResponse result) {
-                future.set(result);
+        class Handler extends ResponseHandler<String> {
+
+            public Handler() {
+                super(String.class);
             }
 
-            public void failed(Exception ex) {
-                future.setException(ex);
+            @Override
+            protected void onError(Throwable err) {
+                future.setException(err);
             }
 
-            public void cancelled() {
-                future.setException(new InterruptedException());
+            @Override
+            protected void onErrorResponse(HttpResponseStatus status, HttpHeaders headers, String content) {
+//                future.setException(new IOException(status + content));
+                future.set(new Response(status, headers, content));
             }
-        });
 
+            @Override
+            protected void receive(HttpResponseStatus status, HttpHeaders headers, String content) {
+                future.set(new Response(status, headers, content));
+            }
+        }
+
+        HttpRequestBuilder bldr = httpClient.request(request.method).setURL(request.uri.toASCIIString());
+
+        if (request.body != null) {
+            try {
+                bldr.setBody(request.body, MediaType.parse("application/x-www-form-urlencoded"));
+            } catch (IOException ex) {
+                Exceptions.chuck(ex);
+            }
+        }
+        ResponseFuture fut = bldr.execute(new Handler());
+        // Pending - could listen on the FullContentReceived state and respond
+        // without waiting for the connection to be idle/closed
         return future;
     }
 
-    public static void close(HttpResponse response) {
-        if (response == null) {
-            return;
+    static class Response {
+
+        public final HttpResponseStatus status;
+        public final HttpHeaders headers;
+        public final String entity;
+
+        public Response(HttpResponseStatus status, HttpHeaders headers, String entity) {
+            this.status = status;
+            this.headers = headers;
+            this.entity = entity;
         }
-        HttpEntity entity = response.getEntity();
-        if (entity != null) {
-            EntityUtils.consumeQuietly(entity);
-        }
+
     }
 
     protected static String urlEscape(String s) {

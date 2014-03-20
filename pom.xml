@@ -3,28 +3,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.justinsb</groupId>
 	<artifactId>etcd-client</artifactId>
-	<version>0.1-tboudreau-fork</version>
+	<version>0.2-tboudreau-fork</version>
 
 	<properties>
 		<artifactTargetPath>${project.build.directory}</artifactTargetPath>
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.5</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpasyncclient</artifactId>
-			<version>4.0-beta4</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>14.0.1</version>
-		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
@@ -37,11 +22,10 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>1.7.5</version>
-			<scope>test</scope>
-		</dependency>
+			<groupId>com.mastfrog</groupId>
+			<artifactId>netty-http-client</artifactId>
+			<version>1.4.13</version>
+		</dependency>                
 	</dependencies>
 
 	<build>
@@ -73,6 +57,7 @@
 					<source>1.6</source>
 					<target>1.6</target>
 					<encoding>UTF-8</encoding>
+				 <showDeprecation>true</showDeprecation>
 				</configuration>
 			</plugin>
 		</plugins>
