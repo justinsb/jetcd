@@ -7,6 +7,7 @@
 
 	<properties>
 		<artifactTargetPath>${project.build.directory}</artifactTargetPath>
+		<maven.test.skip.exec>true</maven.test.skip.exec>
 	</properties>
 
 	<dependencies>
