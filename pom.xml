@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>com.mastfrog</groupId>
 			<artifactId>netty-http-client</artifactId>
-			<version>1.4.14</version>
+			<version>1.4.15</version>
 		</dependency>                
 	</dependencies>
 
