@@ -114,16 +114,16 @@ public class EtcdClient {
         data.add(new BasicNameValuePair("dir", "true"));
         return set0(key, data, new int[] { 200, 201 });
     }
-    
+
     /**
      * Lists a directory
      */
     public List<EtcdNode> listDirectory(String key) throws EtcdClientException {
-      EtcdResult result = get(key + "/");
-      if (result == null || result.node == null) {
-        return null;
-      }
-      return result.node.nodes;
+        EtcdResult result = get(key + "/");
+        if (result == null || result.node == null) {
+            return null;
+        }
+        return result.node.nodes;
     }
     /**
      * Delete a directory
@@ -156,13 +156,13 @@ public class EtcdClient {
      * Watches the given subtree
      */
     public ListenableFuture<EtcdResult> watch(String key, Long index, boolean recursive) throws EtcdClientException {
-    	String suffix = "?wait=true";
-    	if (index != null) {
-    		suffix += "&waitIndex=" + index;
-    	}
-    	if (recursive) {
-    		suffix += "&recursive=true";
-    	}
+        String suffix = "?wait=true";
+        if (index != null) {
+            suffix += "&waitIndex=" + index;
+        }
+        if (recursive) {
+            suffix += "&recursive=true";
+        }
         URI uri = buildKeyUri("v2/keys", key, suffix);
 
         HttpGet request = new HttpGet(uri);
@@ -211,6 +211,7 @@ public class EtcdClient {
             throws EtcdClientException {
         ListenableFuture<JsonResponse> json = asyncExecuteJson(request, expectedHttpStatusCodes);
         return Futures.transform(json, new AsyncFunction<JsonResponse, EtcdResult>() {
+            @Override
             public ListenableFuture<EtcdResult> apply(JsonResponse json) throws Exception {
                 EtcdResult result = jsonToEtcdResult(json, expectedErrorCodes);
                 return Futures.immediateFuture(result);
@@ -245,6 +246,10 @@ public class EtcdClient {
             return null;
         }
         EtcdResult result = parseEtcdResult(response.json);
+
+        result.etcdIndex = response.etcdIndex;
+        result.raftIndex = response.raftIndex;
+        result.raftTerm = response.raftTerm;
 
         if (result.isError()) {
             if (!contains(expectedErrorCodes, result.errorCode)) {
@@ -330,6 +335,7 @@ public class EtcdClient {
         ListenableFuture<HttpResponse> response = asyncExecuteHttp(request);
 
         return Futures.transform(response, new AsyncFunction<HttpResponse, JsonResponse>() {
+            @Override
             public ListenableFuture<JsonResponse> apply(HttpResponse httpResponse) throws Exception {
                 JsonResponse json = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(json);
@@ -343,10 +349,14 @@ public class EtcdClient {
     static class JsonResponse {
         final String json;
         final int httpStatusCode;
+        final long etcdIndex, raftIndex, raftTerm;
 
-        public JsonResponse(String json, int statusCode) {
+        public JsonResponse(String json, int statusCode, long etcdIndex, long raftIndex, long raftTerm) {
             this.json = json;
             this.httpStatusCode = statusCode;
+            this.etcdIndex = etcdIndex;
+            this.raftIndex = raftIndex;
+            this.raftTerm = raftTerm;
         }
 
     }
@@ -375,9 +385,27 @@ public class EtcdClient {
                 }
             }
 
-            return new JsonResponse(json, statusCode);
+            final long etcdIndex = parseLongHeader(httpResponse.getFirstHeader("X-Etcd-Index"));
+            final long raftIndex = parseLongHeader(httpResponse.getFirstHeader("X-Raft-Index"));
+            final long raftTerm = parseLongHeader(httpResponse.getFirstHeader("X-Raft-Term"));
+
+            return new JsonResponse(json, statusCode, etcdIndex, raftIndex, raftTerm);
         } finally {
             close(httpResponse);
+        }
+    }
+
+    private static long parseLongHeader(Header header)
+    {
+        return parseLongHeader(header, Long.MIN_VALUE);
+    }
+
+    private static long parseLongHeader(Header header, long dfl)
+    {
+        if (header == null) {
+            return dfl;
+        } else {
+            return Long.parseLong(header.getValue());
         }
     }
 
@@ -401,14 +429,17 @@ public class EtcdClient {
         final SettableFuture<HttpResponse> future = SettableFuture.create();
 
         httpClient.execute(request, new FutureCallback<HttpResponse>() {
+            @Override
             public void completed(HttpResponse result) {
                 future.set(result);
             }
 
+            @Override
             public void failed(Exception ex) {
                 future.setException(ex);
             }
 
+            @Override
             public void cancelled() {
                 future.setException(new InterruptedException());
             }
