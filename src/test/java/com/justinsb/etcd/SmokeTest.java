@@ -230,4 +230,44 @@ public class SmokeTest {
 		Assert.assertTrue(version.startsWith("etcd 0."));
 	}
 
+    @Test
+    public void testResponseMetadata() throws Exception {
+        String key = prefix + "/message";
+
+        long etcdIndex, raftIndex, raftTerm;
+
+        EtcdResult result;
+
+        result = this.client.set(key, "hello");
+
+        etcdIndex = result.etcdIndex;
+        raftIndex = result.raftIndex;
+        raftTerm = result.raftTerm;
+
+        Assert.assertTrue(etcdIndex > 0);
+        Assert.assertTrue(raftIndex > 0);
+        Assert.assertTrue(raftTerm >= 0);
+
+        result = this.client.get(key);
+
+        Assert.assertEquals(etcdIndex, result.etcdIndex);
+        Assert.assertTrue(raftIndex <= result.raftIndex);
+        Assert.assertTrue(raftTerm <= result.raftTerm);
+        raftIndex = result.raftIndex;
+        raftTerm = result.raftTerm;
+
+        result = this.client.set(key, "world");
+
+        Assert.assertTrue(etcdIndex < result.etcdIndex);
+        Assert.assertTrue(raftIndex < result.raftIndex);
+        Assert.assertTrue(raftTerm <= result.raftTerm);
+        etcdIndex = result.etcdIndex;
+        raftIndex = result.raftIndex;
+        raftTerm = result.raftTerm;
+
+        result = this.client.get(key);
+        Assert.assertEquals(etcdIndex, result.etcdIndex);
+        Assert.assertTrue(raftIndex <= result.raftIndex);
+        Assert.assertTrue(raftTerm <= result.raftTerm);
+    }
 }

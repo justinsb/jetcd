@@ -246,6 +246,10 @@ public class EtcdClient {
         }
         EtcdResult result = parseEtcdResult(response.json);
 
+        result.etcdIndex = response.etcdIndex;
+        result.raftIndex = response.raftIndex;
+        result.raftTerm = response.raftTerm;
+
         if (result.isError()) {
             if (!contains(expectedErrorCodes, result.errorCode)) {
                 throw new EtcdClientException(result.message, result);
@@ -343,10 +347,14 @@ public class EtcdClient {
     static class JsonResponse {
         final String json;
         final int httpStatusCode;
+        final long etcdIndex, raftIndex, raftTerm;
 
-        public JsonResponse(String json, int statusCode) {
+        public JsonResponse(String json, int statusCode, long etcdIndex, long raftIndex, long raftTerm) {
             this.json = json;
             this.httpStatusCode = statusCode;
+            this.etcdIndex = etcdIndex;
+            this.raftIndex = raftIndex;
+            this.raftTerm = raftTerm;
         }
 
     }
@@ -375,9 +383,27 @@ public class EtcdClient {
                 }
             }
 
-            return new JsonResponse(json, statusCode);
+            final long etcdIndex = parseLongHeader(httpResponse.getFirstHeader("X-Etcd-Index"));
+            final long raftIndex = parseLongHeader(httpResponse.getFirstHeader("X-Raft-Index"));
+            final long raftTerm = parseLongHeader(httpResponse.getFirstHeader("X-Raft-Term"));
+
+            return new JsonResponse(json, statusCode, etcdIndex, raftIndex, raftTerm);
         } finally {
             close(httpResponse);
+        }
+    }
+
+    private static long parseLongHeader(Header header)
+    {
+        return parseLongHeader(header, Long.MIN_VALUE);
+    }
+
+    private static long parseLongHeader(Header header, long dfl)
+    {
+        if (header == null) {
+            return dfl;
+        } else {
+            return Long.parseLong(header.getValue());
         }
     }
 

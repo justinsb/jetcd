@@ -12,6 +12,11 @@ public class EtcdResult {
 	public String cause;
 	public int errorIndex;
 
+	// Server metadata
+	public long etcdIndex;
+	public long raftIndex;
+	public long raftTerm;
+
 	public boolean isError() {
 		return errorCode != null;
 	}
