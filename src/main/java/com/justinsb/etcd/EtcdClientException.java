@@ -26,9 +26,9 @@ public class EtcdClientException extends IOException {
         this.httpStatusCode = null;
         this.result = result;
     }
-    
+
     public int getHttpStatusCode() {
-      return httpStatusCode;
+        return httpStatusCode;
     }
 
     public boolean isHttpError(int httpStatusCode) {

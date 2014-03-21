@@ -114,16 +114,16 @@ public class EtcdClient {
         data.add(new BasicNameValuePair("dir", "true"));
         return set0(key, data, new int[] { 200, 201 });
     }
-    
+
     /**
      * Lists a directory
      */
     public List<EtcdNode> listDirectory(String key) throws EtcdClientException {
-      EtcdResult result = get(key + "/");
-      if (result == null || result.node == null) {
-        return null;
-      }
-      return result.node.nodes;
+        EtcdResult result = get(key + "/");
+        if (result == null || result.node == null) {
+            return null;
+        }
+        return result.node.nodes;
     }
     /**
      * Delete a directory
@@ -156,13 +156,13 @@ public class EtcdClient {
      * Watches the given subtree
      */
     public ListenableFuture<EtcdResult> watch(String key, Long index, boolean recursive) throws EtcdClientException {
-    	String suffix = "?wait=true";
-    	if (index != null) {
-    		suffix += "&waitIndex=" + index;
-    	}
-    	if (recursive) {
-    		suffix += "&recursive=true";
-    	}
+        String suffix = "?wait=true";
+        if (index != null) {
+            suffix += "&waitIndex=" + index;
+        }
+        if (recursive) {
+            suffix += "&recursive=true";
+        }
         URI uri = buildKeyUri("v2/keys", key, suffix);
 
         HttpGet request = new HttpGet(uri);
@@ -211,6 +211,7 @@ public class EtcdClient {
             throws EtcdClientException {
         ListenableFuture<JsonResponse> json = asyncExecuteJson(request, expectedHttpStatusCodes);
         return Futures.transform(json, new AsyncFunction<JsonResponse, EtcdResult>() {
+            @Override
             public ListenableFuture<EtcdResult> apply(JsonResponse json) throws Exception {
                 EtcdResult result = jsonToEtcdResult(json, expectedErrorCodes);
                 return Futures.immediateFuture(result);
@@ -334,6 +335,7 @@ public class EtcdClient {
         ListenableFuture<HttpResponse> response = asyncExecuteHttp(request);
 
         return Futures.transform(response, new AsyncFunction<HttpResponse, JsonResponse>() {
+            @Override
             public ListenableFuture<JsonResponse> apply(HttpResponse httpResponse) throws Exception {
                 JsonResponse json = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(json);
@@ -427,14 +429,17 @@ public class EtcdClient {
         final SettableFuture<HttpResponse> future = SettableFuture.create();
 
         httpClient.execute(request, new FutureCallback<HttpResponse>() {
+            @Override
             public void completed(HttpResponse result) {
                 future.set(result);
             }
 
+            @Override
             public void failed(Exception ex) {
                 future.setException(ex);
             }
 
+            @Override
             public void cancelled() {
                 future.setException(new InterruptedException());
             }
