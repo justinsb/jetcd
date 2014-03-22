@@ -8,7 +8,9 @@ CircleCI: ![CircleCI Status](https://circleci.com/gh/justinsb/jetcd.png?circle-t
 
 A simple Java client library for the awesome [etcd]
 
-Uses the Apache [HttpAsyncClient] to implement watches without blocking a thread, and Google's [Guava] to give us the nice [ListenableFuture] interface. 
+This fork of jetcd uses [Netty HTTP Client](https://github.com/timboudreau/netty-http-client) to do asynchronous HTTP
+requests with minimal resource utilization (the [original](https://github.com/justinsb/jetcd) uses [HttpAsyncClient]
+to do the same - the Netty client is lighter-weight, but has more dependencies).
 
 Check out [SmokeTest.java] to see how this is used (and tested), but here's a quick code example:
 
