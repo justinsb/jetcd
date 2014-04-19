@@ -1,9 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+        <parent>
+            <groupId>com.mastfrog</groupId>
+            <version>1.4.16</version>
+            <artifactId>mastfrog-parent</artifactId>
+        </parent>        
 	<groupId>com.justinsb</groupId>
 	<artifactId>etcd-client</artifactId>
-	<version>0.2-tboudreau-fork</version>
+	<version>0.3-tboudreau-fork</version>
 
 	<properties>
 		<artifactTargetPath>${project.build.directory}</artifactTargetPath>
@@ -25,7 +30,7 @@
 		<dependency>
 			<groupId>com.mastfrog</groupId>
 			<artifactId>netty-http-client</artifactId>
-			<version>1.4.15</version>
+			<version>1.4.16</version>
 		</dependency>                
 	</dependencies>
 
