@@ -5,9 +5,9 @@ import java.io.IOException;
 public class EtcdClientException extends IOException {
   private static final long serialVersionUID = 1L;
 
-  final Integer             httpStatusCode;
+  final Integer httpStatusCode;
 
-  final EtcdResult          result;
+  final EtcdResult result;
 
   public EtcdClientException(String message, Throwable cause) {
     super(message, cause);
