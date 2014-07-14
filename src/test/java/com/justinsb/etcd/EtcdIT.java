@@ -25,26 +25,17 @@ public class EtcdIT {
     this.client = new EtcdClient(URI.create("http://127.0.0.1:4001/"));
   }
 
-  
   @Test
   public void testEtcdOffline() throws URISyntaxException {
-    
-
-      EtcdClient client = new EtcdClient(new URI("http://unknowhost"));
-      try {
-        client.get("key");
-        Assert.fail();
-      } catch (EtcdClientException e) {
-        
-      }
-      
-   
-    
-    
-    
-    
+    EtcdClient client = new EtcdClient(new URI("http://unknowhost"));
+    try {
+      client.get("key");
+      Assert.fail();
+    } catch (EtcdClientException e) {
+      // what now?
+    }
   }
-  
+
   @Test
   public void setAndGet() throws Exception {
     String key = prefix + "/message";
@@ -97,7 +88,7 @@ public class EtcdIT {
     result = this.client.delete(key);
     Assert.assertEquals("delete", result.action);
     Assert.assertEquals(null, result.node.value);
-     Assert.assertEquals("hello", result.prevNode.value);
+    Assert.assertEquals("hello", result.prevNode.value);
 
     result = this.client.get(key);
     Assert.assertNull(result);
@@ -108,7 +99,8 @@ public class EtcdIT {
     String key = prefix + "/doesnotexist";
 
     try {
-      /* EtcdResult result = */this.client.delete(key);
+      /* EtcdResult result = */
+      this.client.delete(key);
       Assert.fail();
     } catch (EtcdClientException e) {
       Assert.assertTrue(e.isEtcdError(100));
@@ -155,7 +147,7 @@ public class EtcdIT {
     result = this.client.get(key);
     Assert.assertEquals("world", result.node.value);
   }
-  
+
   @Test
   public void testWatchPrefix() throws Exception {
     String key = prefix + "/watch";
@@ -247,5 +239,4 @@ public class EtcdIT {
     String version = this.client.getVersion();
     Assert.assertTrue(version.startsWith("etcd 0."));
   }
-
 }

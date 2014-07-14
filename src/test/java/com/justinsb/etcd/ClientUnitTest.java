@@ -34,20 +34,16 @@ public class ClientUnitTest {
 
   private CloseableHttpAsyncClient makeClient(final HttpResponse httpResponse) {
     CloseableHttpAsyncClient mock = mock(CloseableHttpAsyncClient.class);
-    when(mock.execute(any(HttpUriRequest.class), any(FutureCallback.class)))
-        .then(new Answer<Future<HttpResponse>>() {
-          @Override
-          public Future<HttpResponse> answer(InvocationOnMock invocation)
-              throws Throwable {
+    when(mock.execute(any(HttpUriRequest.class), any(FutureCallback.class))).then(new Answer<Future<HttpResponse>>() {
+      @Override
+      public Future<HttpResponse> answer(InvocationOnMock invocation) throws Throwable {
+        httpUriRequest = (HttpUriRequest) invocation.getArguments()[0];
+        FutureCallback<HttpResponse> callback = (FutureCallback<HttpResponse>) invocation.getArguments()[1];
+        callback.completed(httpResponse);
 
-            httpUriRequest = (HttpUriRequest) invocation.getArguments()[0];
-            FutureCallback<HttpResponse> callback = (FutureCallback<HttpResponse>) invocation
-                .getArguments()[1];
-            callback.completed(httpResponse);
-
-            return null;
-          }
-        });
+        return null;
+      }
+    });
 
     return mock;
   }
@@ -77,7 +73,7 @@ public class ClientUnitTest {
   }
 
   private HttpResponse newResponse(final int statusCode, final String reason,
-      final EtcdResult result) {
+                                   final EtcdResult result) {
     BasicHttpResponse response = new BasicHttpResponse(new StatusLine() {
 
       @Override
@@ -351,9 +347,7 @@ public class ClientUnitTest {
     try {
       etcdClient.delete("somekey");
       fail();
-    }
-
-    catch (EtcdClientException e) {
+    } catch (EtcdClientException e) {
 
       assertNotNull(httpUriRequest);
       assertEquals("DELETE", httpUriRequest.getMethod());
@@ -404,9 +398,7 @@ public class ClientUnitTest {
     try {
       etcdClient.delete("somekey");
       fail();
-    }
-
-    catch (EtcdClientException e) {
+    } catch (EtcdClientException e) {
 
       assertNotNull(httpUriRequest);
       assertEquals("DELETE", httpUriRequest.getMethod());
@@ -432,9 +424,7 @@ public class ClientUnitTest {
     try {
       etcdClient.deleteDirectory("somekey");
       fail();
-    }
-
-    catch (EtcdClientException e) {
+    } catch (EtcdClientException e) {
 
       assertNotNull(httpUriRequest);
       assertEquals("DELETE", httpUriRequest.getMethod());
@@ -446,7 +436,7 @@ public class ClientUnitTest {
     }
 
   }
-  
+
   @Test
   public void testListingChildren() throws Exception {
     httpUriRequest = null;
@@ -455,15 +445,15 @@ public class ClientUnitTest {
 
     EtcdNode node = new EtcdNode();
     node.key = "/dir";
-    
+
     EtcdNode nodeOne = new EtcdNode();
-    nodeOne.key ="/dir/key1";
+    nodeOne.key = "/dir/key1";
     nodeOne.value = "somevalue";
-    
+
     EtcdNode nodeTwo = new EtcdNode();
     nodeTwo.key = "/dir/key2";
     nodeTwo.value = "somevalue";
-    
+
     node.nodes = Arrays.asList(nodeOne, nodeTwo);
 
     etcdResult.node = node;
@@ -489,7 +479,7 @@ public class ClientUnitTest {
 
     assertEquals(2, result.node.nodes.size());
   }
-  
+
   @Test
   public void testListingDirectory() throws Exception {
     httpUriRequest = null;
@@ -498,15 +488,15 @@ public class ClientUnitTest {
 
     EtcdNode node = new EtcdNode();
     node.key = "/dir";
-    
+
     EtcdNode nodeOne = new EtcdNode();
-    nodeOne.key ="/dir/key1";
+    nodeOne.key = "/dir/key1";
     nodeOne.value = "somevalue";
-    
+
     EtcdNode nodeTwo = new EtcdNode();
     nodeTwo.key = "/dir/key2";
     nodeTwo.value = "somevalue";
-    
+
     node.nodes = Arrays.asList(nodeOne, nodeTwo);
 
     etcdResult.node = node;
@@ -517,7 +507,6 @@ public class ClientUnitTest {
         client);
 
     List<EtcdNode> nodes = etcdClient.listDirectory("dir");
-    
 
     assertNotNull(httpUriRequest);
     assertEquals("GET", httpUriRequest.getMethod());
@@ -528,14 +517,13 @@ public class ClientUnitTest {
         httpGet.getURI());
 
     assertNotNull(nodes);
-    
+
     assertEquals(2, nodes.size());
     assertEquals("/dir/key1", nodes.get(0).key);
     assertEquals("somevalue", nodes.get(0).value);
-    
+
     assertEquals("/dir/key2", nodes.get(1).key);
     assertEquals("somevalue", nodes.get(1).value);
-    
-  }
 
+  }
 }
