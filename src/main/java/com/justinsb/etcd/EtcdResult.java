@@ -1,34 +1,23 @@
 package com.justinsb.etcd;
 
 public class EtcdResult {
-    // General values
-    public String action;
-    public String key;
-    public String value;
-    public long index;
+  // General values
+  public String action;
+  public EtcdNode node;
+  public EtcdNode prevNode;
 
-    // For set operations
-    public String prevValue;
-    public boolean newKey;
+  // For errors
+  public Integer errorCode;
+  public String message;
+  public String cause;
+  public int errorIndex;
 
-    // For TTL keys
-    public String expiration;
-    public Integer ttl;
+  public boolean isError() {
+    return errorCode != null;
+  }
 
-    // For listings
-    public boolean dir;
-
-    // For errors
-    public Integer errorCode;
-    public String message;
-    public String cause;
-
-    public boolean isError() {
-        return errorCode != null;
-    }
-
-    @Override
-    public String toString() {
-        return EtcdClient.format(this);
-    }
+  @Override
+  public String toString() {
+    return EtcdClient.format(this);
+  }
 }
