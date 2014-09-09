@@ -5,7 +5,7 @@
             <groupId>com.mastfrog</groupId>
             <version>1.4.18</version>
             <artifactId>mastfrog-parent</artifactId>
-        </parent>        
+        </parent>
 	<groupId>com.justinsb</groupId>
 	<artifactId>etcd-client</artifactId>
 	<version>0.3-tboudreau-fork</version>
@@ -30,8 +30,8 @@
 		<dependency>
 			<groupId>com.mastfrog</groupId>
 			<artifactId>netty-http-client</artifactId>
-			<version>1.4.17</version>
-		</dependency>                
+			<version>${mastfrog.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
