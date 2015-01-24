@@ -137,6 +137,32 @@ public class SmokeTest {
 	}
 
 	@Test
+	public void testCASPrevValue() throws Exception {
+		String key = prefix + "/cas";
+
+		EtcdResult result;
+
+		result = this.client.set(key, "hello");
+		result = this.client.get(key);
+		Assert.assertEquals("hello", result.node.value);
+
+		result = this.client.cas(key, false, "world");
+		Assert.assertEquals(true, result.isError());
+
+		result = this.client.get(key);
+		Assert.assertEquals("hello", result.node.value);
+
+		result = this.client.delete(key);
+		Assert.assertEquals(false, result.isError());
+
+		result = this.client.cas(key, false, "world");
+		Assert.assertEquals(false, result.isError());
+
+		result = this.client.get(key);
+		Assert.assertEquals("world", result.node.value);
+	}
+
+	@Test
 	public void testWatchPrefix() throws Exception {
 		String key = prefix + "/watch";
 
