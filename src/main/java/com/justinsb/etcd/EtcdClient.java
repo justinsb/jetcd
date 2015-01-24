@@ -146,6 +146,17 @@ public class EtcdClient {
     }
 
     /**
+     * Sets a key to a new value, depending on the previous existence of the key
+     */
+    public EtcdResult cas(String key, Boolean prevExist, String value) throws EtcdClientException {
+        List<BasicNameValuePair> data = Lists.newArrayList();
+        data.add(new BasicNameValuePair("value", value));
+        data.add(new BasicNameValuePair("prevExist", prevExist.toString()));
+
+        return set0(key, data, new int[] { 200, 201, 412 }, 105);
+    }
+
+    /**
      * Watches the given subtree
      */
     public ListenableFuture<EtcdResult> watch(String key) throws EtcdClientException {
