@@ -11,12 +11,10 @@
     <groupId>com.justinsb</groupId>
     <artifactId>etcd-client</artifactId>
     <version>0.3-tboudreau-fork</version>
-
     <properties>
         <artifactTargetPath>${project.build.directory}</artifactTargetPath>
         <maven.test.skip.exec>true</maven.test.skip.exec>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -97,4 +95,23 @@
             </snapshots>
         </repository>
     </repositories>
+    <url>https://github.com/timboudreau/jetcd</url>
+    <scm>
+        <url>https://github.com/timboudreau/jetcd</url>
+        <connection>scm:git:https://github.com/timboudreau/jetcd.git</connection>
+        <developerConnection>git@github.com/timboudreau/jetcd.git</developerConnection>
+    </scm>
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>http://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Tim Boudreau</name>
+            <email>tim@timboudreau.com</email>
+            <url>https://timboudreau.com</url>
+        </developer>
+    </developers>
 </project>
