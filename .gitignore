@@ -3,3 +3,6 @@ external/
 .classpath
 .settings
 /target
+.idea
+*.iml
+atlassian-ide-plugin.xml
