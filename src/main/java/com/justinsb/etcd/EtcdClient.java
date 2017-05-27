@@ -256,7 +256,7 @@ public class EtcdClient {
     protected ListenableFuture<EtcdResult> asyncExecute(UriRequest request, int[] expectedHttpStatusCodes, final int... expectedErrorCodes)
             throws EtcdClientException {
         ListenableFuture<JsonResponse> json = asyncExecuteJson(request, expectedHttpStatusCodes);
-        return Futures.transform(json, new AsyncFunction<JsonResponse, EtcdResult>() {
+        return Futures.transformAsync(json, new AsyncFunction<JsonResponse, EtcdResult>() {
             public ListenableFuture<EtcdResult> apply(JsonResponse json) throws Exception {
                 EtcdResult result = jsonToEtcdResult(json, expectedErrorCodes);
                 return Futures.immediateFuture(result);
@@ -358,7 +358,7 @@ public class EtcdClient {
     protected ListenableFuture<JsonResponse> asyncExecuteJson(UriRequest request, final int[] expectedHttpStatusCodes) throws EtcdClientException {
         ListenableFuture<Response> response = asyncExecuteHttp(request);
 
-        return Futures.transform(response, new AsyncFunction<Response, JsonResponse>() {
+        return Futures.transformAsync(response, new AsyncFunction<Response, JsonResponse>() {
             public ListenableFuture<JsonResponse> apply(Response httpResponse) throws Exception {
                 JsonResponse json = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(json);
