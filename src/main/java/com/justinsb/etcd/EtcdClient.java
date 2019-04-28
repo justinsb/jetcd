@@ -30,6 +30,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
 public class EtcdClient {
 
@@ -248,6 +249,7 @@ public class EtcdClient {
             this.body = body;
         }
 
+        @Override
         public String toString() {
             return method.name() + ' ' + uri + (body == null ? "" : " --> " + body);
         }
@@ -261,7 +263,7 @@ public class EtcdClient {
                 EtcdResult result = jsonToEtcdResult(json, expectedErrorCodes);
                 return Futures.immediateFuture(result);
             }
-        });
+        }, ForkJoinPool.commonPool());
     }
 
     protected EtcdResult syncExecute(UriRequest request, int[] expectedHttpStatusCodes, int... expectedErrorCodes) throws EtcdClientException {
@@ -363,7 +365,7 @@ public class EtcdClient {
                 JsonResponse json = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(json);
             }
-        });
+        }, ForkJoinPool.commonPool());
     }
 
     /**

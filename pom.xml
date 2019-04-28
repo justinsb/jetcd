@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.justinsb</groupId>
     <artifactId>etcd-client</artifactId>
-    <version>0.3-tboudreau-fork</version>
+    <version>0.3-tboudreau-fork-1</version>
     <properties>
         <artifactTargetPath>${project.build.directory}</artifactTargetPath>
         <maven.test.skip.exec>true</maven.test.skip.exec>
@@ -33,7 +33,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.1.1</version>
                 <configuration>
                     <target>1.5</target>
                     <descriptorRefs>
@@ -55,7 +55,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.8.0</version>
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
@@ -70,7 +70,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>3.0.5</version>
                 <configuration>
                     <xmlOutput>true</xmlOutput>
                     <xmlOutputDirectory>${artifactTargetPath}</xmlOutputDirectory>
