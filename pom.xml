@@ -103,6 +103,10 @@
         <connection>scm:git:https://github.com/timboudreau/jetcd.git</connection>
         <developerConnection>git@github.com/timboudreau/jetcd.git</developerConnection>
     </scm>
+    <organization>
+        <name>Mastfrog Technologies</name>
+        <url>https://mastfrog.com</url>
+    </organization>
     <licenses>
         <license>
             <name>MIT</name>
