@@ -94,7 +94,10 @@
             </snapshots>
         </repository>
     </repositories>
-    <url>https://github.com/timboudreau/jetcd</url>
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/timboudreau/jetcd/issues</url>
+    </issueManagement>
     <scm>
         <url>https://github.com/timboudreau/jetcd</url>
         <connection>scm:git:https://github.com/timboudreau/jetcd.git</connection>
