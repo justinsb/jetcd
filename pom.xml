@@ -9,6 +9,7 @@
     </parent>
     <groupId>com.justinsb</groupId>
     <artifactId>etcd-client</artifactId>
+    <url>https://github.com/timboudreau/jetcd</url>
     <version>0.3-tboudreau-fork-1</version>
     <properties>
         <artifactTargetPath>${project.build.directory}</artifactTargetPath>
@@ -99,10 +100,11 @@
         <url>https://github.com/timboudreau/jetcd/issues</url>
     </issueManagement>
     <scm>
-        <url>https://github.com/timboudreau/jetcd</url>
+        <url>https://github.com/timboudreau/jetcd.git</url>
         <connection>scm:git:https://github.com/timboudreau/jetcd.git</connection>
         <developerConnection>git@github.com/timboudreau/jetcd.git</developerConnection>
     </scm>
+    
     <organization>
         <name>Mastfrog Technologies</name>
         <url>https://mastfrog.com</url>
@@ -110,7 +112,8 @@
     <licenses>
         <license>
             <name>MIT</name>
-            <url>http://opensource.org/licenses/MIT</url>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
     <developers>
