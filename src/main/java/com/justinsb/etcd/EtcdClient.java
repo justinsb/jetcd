@@ -2,7 +2,6 @@ package com.justinsb.etcd;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.net.MediaType;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -13,6 +12,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mastfrog.acteur.headers.Method;
+import com.mastfrog.mime.MimeType;
 import com.mastfrog.netty.http.client.HttpClient;
 import com.mastfrog.netty.http.client.HttpRequestBuilder;
 import com.mastfrog.netty.http.client.ResponseFuture;
@@ -447,7 +447,7 @@ public class EtcdClient {
 
         if (request.body != null) {
             try {
-                bldr.setBody(request.body, MediaType.parse("application/x-www-form-urlencoded"));
+                bldr.setBody(request.body, MimeType.FORM_DATA);
             } catch (IOException ex) {
                 Exceptions.chuck(ex);
             }
